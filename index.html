@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>J.A.R.V.I.S.</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="J.A.R.V.I.S.">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary: #06b6d4;
+        --primary-glow: rgba(6, 182, 212, 0.6);
+        --bg-dark: #020617;
+        --panel-bg: rgba(8, 14, 28, 0.85);
+      }
+      
+      /* AGI THEME OVERRIDES */
+      .theme-agi {
+        --primary: #f59e0b; /* Amber-500 */
+        --primary-glow: rgba(245, 158, 11, 0.6);
+        --panel-bg: rgba(28, 15, 0, 0.85);
+      }
+
+      body {
+        font-family: 'Rajdhani', sans-serif;
+        background-color: #000000;
+        color: var(--primary);
+        overflow: hidden; 
+        transition: color 0.5s ease;
+        overscroll-behavior: none; /* Prevent pull-to-refresh on mobile */
+      }
+      .font-hud {
+        font-family: 'Orbitron', sans-serif;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.5);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 2px;
+      }
+      
+      /* Animations */
+      @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes spin-reverse {
+        from { transform: rotate(360deg); }
+        to { transform: rotate(0deg); }
+      }
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 5px var(--primary-glow); opacity: 1; }
+        50% { box-shadow: 0 0 20px var(--primary-glow); opacity: 0.8; }
+      }
+      @keyframes cosmic-pulse {
+        0% { box-shadow: 0 0 10px #f59e0b, 0 0 20px #d97706; filter: hue-rotate(0deg); }
+        50% { box-shadow: 0 0 30px #f59e0b, 0 0 60px #fbbf24; filter: hue-rotate(10deg); }
+        100% { box-shadow: 0 0 10px #f59e0b, 0 0 20px #d97706; filter: hue-rotate(0deg); }
+      }
+
+      /* Utility Classes for HUD look */
+      .glow-text {
+        text-shadow: 0 0 5px var(--primary), 0 0 10px var(--primary-glow);
+      }
+      
+      .tech-border {
+        position: relative;
+        background: var(--panel-bg);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-color: var(--primary);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        transition: border-color 0.5s ease;
+        clip-path: polygon(
+          0 10px, 10px 0, 
+          calc(100% - 10px) 0, 100% 10px, 
+          100% calc(100% - 10px), calc(100% - 10px) 100%, 
+          10px 100%, 0 calc(100% - 10px)
+        );
+      }
+      .tech-border::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        border: 1px solid var(--primary);
+        opacity: 0.3;
+        clip-path: polygon(
+          0 10px, 10px 0, 
+          calc(100% - 10px) 0, 100% 10px, 
+          100% calc(100% - 10px), calc(100% - 10px) 100%, 
+          10px 100%, 0 calc(100% - 10px)
+        );
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .hex-bg {
+        background-image: 
+          radial-gradient(circle at center, transparent 0%, #000 100%),
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 100% 100%, 40px 40px, 40px 40px;
+      }
+
+      /* --- BUTTON STYLES --- */
+      .btn-base {
+        transition: all 0.2s ease-in-out;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+      }
+      
+      .btn-base::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 50%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transform: skewX(-20deg);
+        transition: left 0.5s;
+      }
+      
+      .btn-base:hover::after {
+        left: 200%;
+      }
+
+      .btn-tech-primary {
+        background: rgba(6, 182, 212, 0.2);
+        border: 1px solid #06b6d4;
+        color: #06b6d4;
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+      }
+      .theme-agi .btn-tech-primary {
+        background: rgba(245, 158, 11, 0.2);
+        border: 1px solid #f59e0b;
+        color: #f59e0b;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+      }
+      
+      .btn-tech-primary:hover {
+        background: var(--primary);
+        color: black;
+        box-shadow: 0 0 20px var(--primary-glow);
+        text-shadow: none;
+      }
+
+      .btn-tech-secondary {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.5);
+      }
+      .btn-tech-secondary:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+      .btn-tech-secondary.active {
+        background: var(--primary);
+        color: #000;
+        border-color: var(--primary);
+        box-shadow: 0 0 15px var(--primary-glow);
+      }
+
+      .btn-tech-danger {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid #ef4444;
+        color: #ef4444;
+      }
+      .btn-tech-danger:hover {
+        background: rgba(239, 68, 68, 0.4);
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+        color: white;
+      }
+
+      .btn-tech-special {
+        background: rgba(168, 85, 247, 0.1);
+        border: 1px solid #a855f7;
+        color: #d8b4fe;
+      }
+      .btn-tech-special:hover {
+        background: rgba(168, 85, 247, 0.4);
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+        color: white;
+      }
+
+      .input-tech {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--primary);
+        font-family: 'Rajdhani', sans-serif;
+        clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+      }
+      .input-tech:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 10px var(--primary-glow);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
